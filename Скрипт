@@ -1,0 +1,37 @@
+#!/bin/bash
+
+if [ $# -ne 3 ]; then
+  echo "$0 <directory> <mode> <date (YYYY-MM-DD)>"
+  exit 1
+fi
+
+directory="$1"
+mode="$2"
+date="$3"
+
+if [ ! -d "$directory" ]; then
+  echo "такой директории не существует"
+  exit 1
+fi
+
+if [ "$mode" != "archive" ] && [ "$mode" != "delete" ]; then
+  echo "Ты ничего не ввел :<"
+  exit 1
+fi
+
+if [ "$mode" == "archive" ]; then
+  timestamp=$(date +"%Y%m%d")
+  tar -cf "${directory}/archive_${timestamp}.tar" "$directory"/*
+  echo "Файлы переархивированны в ${directory}/archive_${timestamp}.tar"
+
+elif [ "$mode" == "delete" ]; then
+  find "$directory" -type f -name "*.log" -printf "%T+ %p\n" | while IFS=" " read -r timestamp file; do
+    if [ $(date -d "$timestamp" +%Y-%m-%d) -lt $(date -d "$date" +%s) ]; then
+      rm "$file"
+      echo "Файл $file был успешно удален >:)"
+    fi
+  done
+
+fi
+
+exit 0
